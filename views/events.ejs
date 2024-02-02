@@ -1,0 +1,147 @@
+<!-- events.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<meta name="_csrf" content="<%= csrfToken %>">
+
+<head>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    .events-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 60px;
+      padding: 20px; /* Added padding for spacing */
+      width: 900px;
+      margin: 30px;
+    }
+
+    .event-card {
+      flex: 0 0 calc(33.33% - 20px); /* Adjusted width to fit three cards in a row */
+      box-sizing: border-box;
+      background-color: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .event-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .event-card img {
+      width: 100%;
+      height: auto;
+      max-height: 150px;
+      object-fit: cover;
+    }
+
+    .event-details {
+      padding: 15px;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      color: #333;
+    }
+
+    p {
+      margin: 0 0 8px;
+      color: #666;
+    }
+
+    button {
+      background-color: #3498db;
+      color: #fff;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    .event-card.joined {
+      background-color: #c0f0c0; /* Change the background color to indicate "joined" */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="events-container" id="eventsContainer">
+    <% events.forEach(event => { %>
+      <div class="event-card <%= joinedEventIds.includes(event.id) ? 'joined' : '' %>" data-event-id="<%= event.id %>">
+        <img src="<%= event.teamLogo %>" alt="Team Logo">
+        <div class="event-details">
+          <h3><%= event.teamname %> - <%= event.eventName %></h3>
+          <p>Date: <%= new Date(event.date).toLocaleString() %></p>
+          <p>Venue: <%= event.venue %></p>
+
+          <!-- Include CSRF token as a data attribute -->
+          <button class="join-button" data-event-id="<%= event.id %>" data-csrf-token="<%= csrfToken %>">
+            <%= joinedEventIds.includes(event.id) ? 'Joined' : 'Join' %>
+          </button>
+          <button class="viewPlayersBtn" data-event-id="<%= event.id %>">View Players</button>
+
+          <p class="event-id-display"></p>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+  <script>
+    document.addEventListener('click', async (event) => {
+      const joinButton = event.target.closest('.join-button');
+
+      if (joinButton) {
+        const eventId = joinButton.dataset.eventId;
+        const csrfToken = joinButton.dataset.csrfToken;
+        console.log("hello");
+        console.log(eventId);
+        try {
+          const response = await fetch('/join_event', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'CSRF-Token': csrfToken,
+            },
+            body: JSON.stringify({ eventId }),
+          });
+          const data = await response.json();
+
+          if (data.success) {
+            console.log('Player joined event successfully');
+
+            const eventCard = joinButton.closest('.event-card');
+            if (eventCard) {
+              eventCard.classList.add('joined');
+            }
+            alert('You have successfully joined the event!');
+          } else {
+            console.error('Error joining event:', data.error);
+          }
+        } catch (error) {
+          console.error('Error joining event:', error);
+        }
+      }
+    });
+    document.querySelectorAll('.viewPlayersBtn').forEach(button => {
+      button.addEventListener('click', function() {
+        const eventId = this.getAttribute('data-event-id');
+        window.location.href = `/view_players/${eventId}`;
+      });
+    });
+
+  </script>
+</body>
+
+</html>

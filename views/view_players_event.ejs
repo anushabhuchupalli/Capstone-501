@@ -1,0 +1,55 @@
+<!-- views/view_players_event.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1em;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Event Details</h1>
+        <p>Event Name: <%= event.eventName %></p>
+        <p>Event Date: <%= event.date %></p>
+        <!-- Add more event details as needed -->
+    </header>
+
+    <section>
+        <h2>Players for the Event</h2>
+        <ul>
+            <% players.forEach(player => { %>
+                <li><%= player.playerName %></li>
+            <% }); %>
+        </ul>
+    </section>
+</body>
+</html>

@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Page</title>
+  <link rel="stylesheet" href="./Styles/admin.css" />
+
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-image: white;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .nav {
+      background-color: rgba(51, 51, 51, 0.8);
+      color: #fff;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo {
+      font-size: 1.5em;
+      font-weight: bold;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .elements {
+      display: flex;
+      gap: 20px;
+    }
+
+    .elements a {
+      color: #fff;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .elements a:hover {
+      background-color: rgba(85, 85, 85, 0.8);
+    }
+
+    .section {
+      text-align: center;
+      color: #333;
+      margin: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sports-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .sport-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin: 20px;
+      overflow: hidden;
+      height:250px;
+      transition: transform 0.3s ease-in-out;
+      width: 250px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .sport-card:hover {
+      transform: scale(1.05);
+    }
+
+    .sport-card img {
+      border-radius: 10px 10px 0 0;
+      object-fit: cover;
+      height: 300px; /* Adjust the height as needed */
+
+      width: 100%;
+    }
+
+    .sport-card-content {
+      padding: 20px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .sport-card h3 {
+      color: #333;
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+
+    .sport-card button {
+      background-color: #333;
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      cursor: pointer;
+      padding: 10px;
+      transition: background-color 0.3s;
+      width: 70%;
+    }
+
+    .sport-card button:hover {
+      background-color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="nav">
+    <a href="/home" class="logo"></a>
+    <div class="elements">
+      <a href="/player_main">Home</a>
+      <a href="/schedules">Schedules</a>
+      <a href="/events">events</a>
+      <a href="/logout">logout</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Available Sports</h2>
+    <div class="sports-container" id="sportsContainer"></div>
+  </div>
+
+  <script>
+    let sports = [];
+  
+    function displaySports() {
+      const sportsContainer = document.getElementById("sportsContainer");
+      sportsContainer.innerHTML = "";
+  
+      sports.forEach((sport, index) => {
+        const sportCard = document.createElement("div");
+        sportCard.classList.add("sport-card");
+        sportCard.innerHTML = `
+          <h3>${sport.name}</h3>
+          <img src="${sport.image_url}" alt="${sport.name}" style="max-width: 100%; max-height: 100px;">
+          <button onclick="createSport()">Create</button>
+        `;
+        sportsContainer.appendChild(sportCard);
+      });
+    }
+  
+    function createSport() {
+      // Redirect to the /create_schedule route
+      window.location.href = '/create_schedule';
+    }
+  
+    document.addEventListener("DOMContentLoaded", () => {
+      // Fetch sports data from the server
+      fetch('/api/sports')
+        .then(response => response.json())
+        .then(data => {
+          sports = data;
+          displaySports();
+        })
+        .catch(error => {
+          console.error('Error while fetching sports:', error);
+        });
+    });
+  </script>
+  
+</body>
+
+</html>

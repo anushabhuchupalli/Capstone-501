@@ -1,0 +1,22 @@
+{
+  "name": "check",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "husky": "^9.0.6"
+  },
+  "dependencies": {
+    "connect-flash": "^0.1.1",
+    "connect-session-sequelize": "^7.1.7",
+    "csurf": "^1.11.0",
+    "express-session": "^1.18.0",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0"
+  }
+}
