@@ -40,6 +40,8 @@ app.use(session({
   secret: '6464235660954863',
   resave: false,
   saveUninitialized: false,
+  store: sessionStore, // Use the Sequelize session store
+
 }));
 
 
@@ -105,6 +107,8 @@ const Schedule = sequelize.define('Schedule', {
 // Rest of the code
 const PlayerJoins = sequelize.define('PlayerJoins', {
   playerName: { type: DataTypes.STRING, allowNull: false },
+  userType: { type: DataTypes.STRING, allowNull: false }, // Add this line
+
 });
 Sport.belongsTo(Admin);
 Admin.hasMany(Sport);
@@ -112,16 +116,35 @@ Admin.hasMany(Sport);
 // Add the association between Schedule and PlayerJoins
 Schedule.hasMany(PlayerJoins);
 PlayerJoins.belongsTo(Schedule);
+passport.serializeUser((user, done) => {
+  done(null, { id: user.id, userType: user.userType });
+});
 
+passport.deserializeUser(async (serializedUser, done) => {
+  try {
+    const userId = serializedUser.id;
+    const userType = serializedUser.userType || null; // Set to null if not present
 
+    let user = null;
 
+    if (userType === 'admin') {
+      user = await Admin.findByPk(userId, { raw: true });
+    } else if (userType === 'player') {
+      user = await People.findByPk(userId, { raw: true });
+    }
+
+    done(null, user);
+  } catch (error) {
+    done(error);
+  }
+});
 
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.redirect('/admin'); // Redirect to the login page
-};
+  res.redirect('/'); // Redirect to the login page
+}
 
 
 app.get('/admin', (req, res) => {
@@ -147,6 +170,9 @@ passport.use('admin', new LocalStrategy(async (username, password, done) => {
   try {
     const admin = await Admin.findOne({ where: { username, password } });
     if (admin) {
+      passport.serializeUser((user, done) => {
+        done(null, { id: user.id, userType: 'admin' });
+      });
       return done(null, admin);
     } else {
       return done(null, false, { message: 'Invalid login credentials' });
@@ -156,11 +182,14 @@ passport.use('admin', new LocalStrategy(async (username, password, done) => {
   }
 }));
 
-passport.use('person', new LocalStrategy(async (username, password, done) => {
+passport.use('player', new LocalStrategy(async (username, password, done) => {
   try {
-    const person = await People.findOne({ where: { username, password } });
-    if (person) {
-      return done(null, person);
+    const player = await People.findOne({ where: { username, password } });
+    if (player) {
+      passport.serializeUser((user, done) => {
+        done(null, { id: user.id, userType: 'player' });
+      });
+      return done(null, player);
     } else {
       return done(null, false, { message: 'Invalid login credentials' });
     }
@@ -172,20 +201,13 @@ passport.use('person', new LocalStrategy(async (username, password, done) => {
 
 
 
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.redirect('/login');
-}
-
 app.post('/player/signup', async (req, res) => {
   try {
     const { username, email, password } = req.body;
     const newPerson = await People.create({ username, email, password });
 
     passport.serializeUser((user, done) => {
-      done(null, user.id);
+      done(null, { id: user.id, userType: 'player' });
     });
 
     return res.redirect('/person_main');
@@ -197,29 +219,9 @@ app.post('/player/signup', async (req, res) => {
 
 
 
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
 
-
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    const admin = await Admin.findByPk(id);
-    if (admin) {
-      done(null, admin);
-    } else {
-      const person = await People.findByPk(id);
-      done(null, person);
-    }
-  } catch (error) {
-    done(error);
-  }
-});
-
-
-app.post('/person/login', (req, res, next) => {
-  passport.authenticate('person', (err, user, info) => {
+app.post('/player/login', (req, res, next) => {
+  passport.authenticate('player', (err, user, info) => {
     if (err) {
       return next(err);
     }
@@ -227,12 +229,15 @@ app.post('/person/login', (req, res, next) => {
       req.flash('error', info.message);
       return res.redirect('/');
     }
-    req.login({ id: user.id, userType: 'person' }, (err) => {
+    req.login({ id: user.id, userType: 'player' }, (err) => {
       if (err) {
         return next(err);
       }
       else{
+
       // Redirect to the desired page after successful submission
+      console.log('User session after login:', req.session);
+
       return res.redirect('/person_main');
       }
     });
@@ -240,14 +245,18 @@ app.post('/person/login', (req, res, next) => {
 });
 
 app.get('/person_main', ensureAuthenticated, (req, res) => {
-  res.render('player_main');
-});
+  const csrfToken = req.csrfToken();
+
+  res.render('player_main', {csrfToken });});
 
 
 app.post('/admin/signup', async (req, res) => {
   try {
     const { username, email, password } = req.body;
     const newAdmin = await Admin.create({ username, email, password });
+    passport.serializeUser((user, done) => {
+      done(null, { id: user.id, userType: 'admin' });
+    });
     res.redirect('/admin_main');
   } catch (error) {
     console.error(error);
@@ -272,10 +281,15 @@ app.post('/admin/login', (req, res, next) => {
       if (err) {
         return next(err);
       }
+      console.log('User session after login:', req.session);
+
       return res.redirect('/admin_main');
     });
   })(req, res, next);
 });
+  
+
+
 app.get('/admin_main', (req, res) => {
   const csrfToken = req.csrfToken();
   console.log('CSRF Token:', csrfToken);
@@ -295,20 +309,29 @@ app.get('/add_sport', (req, res) => {
 app.post('/admin/sports/add', ensureAuthenticated, async (req, res) => {
   try {
     const { name, image_url } = req.body;
-
+    console.log('anuuuuuu');
     if (!image_url) {
       return res.status(400).json({ success: false, error: 'Image URL cannot be null or empty.' });
     }
 
-    const adminId = req.user.id; 
-
+    const adminId = req.user.id;
+    console.log('Authenticated Admin ID:', adminId);
     const newSport = await Sport.create({ name, image_url, AdminId: adminId });
 
+    // Redirect to admin_main after successfully adding a sport
     res.redirect('/admin_main');
-    } catch (error) {
+  } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
+});
+
+
+app.get('/admin_main', (req, res) => {
+  const csrfToken = req.csrfToken();
+  console.log('CSRF Token:', csrfToken);
+
+  res.render('admin_main', { csrfToken });
 });
 
   
@@ -388,8 +411,10 @@ app.delete('/admin/sports/:id', ensureAuthenticated, async (req, res) => {
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 });
-app.get('/events', async (req, res) => {
+app.get('/events', ensureAuthenticated, async (req, res) => {
   try {
+    const username = req.user && req.user.username ? req.user.username : null;
+    console.log(username);
     const events = await Schedule.findAll({
       where: {
         date: {
@@ -398,17 +423,9 @@ app.get('/events', async (req, res) => {
       },
       order: [['date', 'ASC']],
     });
-    const joinedEvents = await PlayerJoins.findAll({
-      where: {
-        playerName: req.user.username,
-      },
-      attributes: ['ScheduleId'],
-    });
-
-    const joinedEventIds = joinedEvents.map((join) => join.ScheduleId);
 
     const csrfToken = req.csrfToken();
-    res.render('events', { events, csrfToken, joinedEventIds });
+    res.render('events', { events, csrfToken });
   } catch (error) {
     console.error('Error fetching events:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -419,12 +436,15 @@ app.get('/events', async (req, res) => {
   
 app.post('/join_event', ensureAuthenticated, async (req, res) => {
   try {
+
     const { eventId } = req.body;
     console.log('eventId:', eventId);
 
     const username = req.user ? req.user.username : null;
+    const userType = req.session.passport.user.userType;
 
-    if (!username) {
+    console.log(userType);
+    if (!username || !userType) {
       return res.status(403).json({ success: false, error: 'User not authenticated' });
     }
     const existingJoin = await PlayerJoins.findOne({
@@ -442,8 +462,11 @@ app.post('/join_event', ensureAuthenticated, async (req, res) => {
     }
     const playerJoin = await PlayerJoins.create({
       playerName: username,
+      userType: userType, // Store the user type in PlayerJoins table
+
       ScheduleId: schedule.id,
     });
+    
     return res.status(200).json({ success: true, message: 'Joined event successfully' });
   } catch (error) {
     console.error('Error joining event:', error);
@@ -494,6 +517,56 @@ app.post('/change_password', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+app.get('/admin/schedules', async (req, res) => {
+  try {
+    // Fetch all schedules from the database
+    const schedules = await Schedule.findAll();
+
+    // Convert schedules to FullCalendar format
+    const events = schedules.map(schedule => ({
+      title: schedule.title,
+      start: schedule.date.toISOString(), // Convert your date to ISO format
+    }));
+
+    // Return JSON data for FullCalendar
+    res.json(events);
+  } catch (error) {
+    console.error('Error fetching schedules:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+// ... (other imports and configurations)
+app.get('/records', (req, res) => {
+  const csrfToken = req.csrfToken();
+  res.render('calender', { csrfToken });
+});
+app.get('/api/events', async (req, res) => {
+  const date = req.query.date;
+
+  if (!date) {
+    return res.status(400).json({ error: 'Date parameter is missing' });
+  }
+
+  try {
+    // Fetch events from the Schedule table for the specified date
+    const events = await Schedule.findAll({
+      attributes: ['eventName', 'teamname', 'venue', 'date'], // Adjust attributes as needed
+      where: {
+        date: {
+          [Op.gte]: new Date(date),
+          [Op.lt]: new Date(new Date(date).getTime() + 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+
+    res.json(events);
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// ... (other routes and server setup)
 
 app.get('/admin/:adminId', (req, res) => {
   const adminId = req.params.adminId;
@@ -504,8 +577,10 @@ app.get('/player_main', ensureAuthenticated, (req, res) => {
   res.render('player_main');
 });
 app.get('/logout', (req, res) => {
-  res.render('/');
+  req.logout(); // Clears the login session
+  res.redirect('/login');
 });
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });

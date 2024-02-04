@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Calendar</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.3/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.3/dist/flatpickr.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            margin: 0;
+            background-color: #fff;
+            /* White background */
+        }
+
+        #static-bar {
+            background-color: lavender;
+            color: black;
+            padding: 10px;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #left-heading {
+            margin-left: 20px; /* Adjust margin as needed */
+        }
+
+        #right-heading {
+            margin-right: 400px; /* Adjust margin as needed */
+            margin-top: 50px;
+        }
+
+        #today-container {
+            width: 50%;
+            margin-top: 60px;
+            /* Adjust margin as needed */
+        }
+
+        #calendar-symbol {
+            cursor: pointer;
+        }
+
+        #datepicker {
+            display: none;
+        }
+
+        #main-content {
+            display: flex;
+            justify-content: center;
+            margin-top: 60px;
+            /* Adjust margin as needed */
+            padding: 20px;
+            /* Add padding for content */
+        }
+
+        #events-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 50px;
+            margin-left: 450px;
+            /* Adjust margin as needed */
+        }
+
+        #events-list li {
+            border-bottom: 1px solid #ddd;
+            /* Thin line separating events */
+            padding: 25px;
+        }
+
+        #sport-dropdown {
+            margin-right: 30px; /* Adjust margin as needed */
+            cursor: pointer;
+            /* Add cursor style to indicate interactivity */
+        }
+
+        #sport-dropdown::after {
+            content: '▼'; /* Down arrow character */
+            margin-left: 5px; /* Adjust spacing */
+        }
+
+        h1,
+        h2 {
+            text-align: center;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="static-bar">
+        <div id="today-container">
+            <h2 id="left-heading">TODAY</h2>
+            <!-- Calendar Symbol to trigger datepicker -->
+            <span id="calendar-symbol">📅</span>
+            <!-- Hidden datepicker input field -->
+            <input type="text" id="datepicker">
+        </div>
+        <div id="full-schedule-container">
+            <!-- Add this div for the FULL EVENT SCHEDULE heading -->
+            <h2 id="right-heading">
+                FULL EVENT SCHEDULE
+                <select id="sport-dropdown">
+                    <option value="all">All Sports</option>
+                    <option value="football">Football</option>
+                    <option value="cricket">Cricket</option>
+                    <option value="tennis">Tennis</option>
+                    <!-- Add more sports as needed -->
+                </select>
+            </h2>
+        </div>
+    </div>
+
+    <!-- Main content below static bar -->
+    <div id="main-content">
+        <!-- Event details will be displayed here -->
+        <ul id="events-list"></ul>
+    </div>
+
+    <script>
+      $(document).ready(function () {
+          const datePicker = flatpickr("#datepicker", {
+              dateFormat: "Y-m-d",
+              onClose: function (selectedDates, dateStr, instance) {
+                  // Handle date selection
+                  fetchSchedules(dateStr);
+              },
+          });
+
+          $("#calendar-symbol").on("click", function () {
+              datePicker.open();
+          });
+
+          $("#sport-dropdown").on("change", function () {
+              const selectedSport = $(this).val();
+              fetchSchedules(datePicker.selectedDates[0], selectedSport);
+          });
+
+          function fetchSchedules(date, sport) {
+              $.ajax({
+                  url: '/api/events',
+                  type: 'GET',
+                  data: {
+                      date: date,
+                      sport: sport,
+                  },
+                  success: function (response) {
+                      displaySchedules(response);
+                  },
+                  error: function (xhr, status, error) {
+                      console.error('Error fetching events:', error);
+                  },
+              });
+          }
+
+          function displaySchedules(schedules) {
+              const eventsList = $("#events-list");
+              eventsList.empty();
+
+              if (schedules.length === 0) {
+                  const selectedSport = $("#sport-dropdown").val();
+                  eventsList.append(`<p>No schedules for the selected date and sport (${selectedSport}).</p>`);
+              } else {
+                  schedules.forEach(schedule => {
+                      const eventItem = $("<li></li>").text(
+                          `Event: ${schedule.eventName}, Team: ${schedule.teamname}, Venue: ${schedule.venue}, Date: ${new Date(schedule.date).toLocaleString()}`
+                      );
+                      eventsList.append(eventItem);
+                  });
+              }
+          }
+      });
+  </script>
+
+</body>
+
+</html>

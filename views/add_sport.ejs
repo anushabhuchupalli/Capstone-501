@@ -8,113 +8,76 @@
   <title>Add Sport</title>
   <link rel="stylesheet" href="./Styles/admin.css" />
   <style>
-    /* Your existing styles ... */
+   body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f0f0f0;
+  margin: 0;
+  padding: 0;
+}
 
-    /* Form Styles */
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
+h1 {
+  text-align: center;
+  color: #333;
+}
 
-    .add-form {
-      background-color: white;
-      padding: 30px;
-      border-radius: 7px;
-      box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
-      text-align: center;
-      transition: all 0.3s;
-      max-width: 400px;
-      width: 100%;
-      box-sizing: border-box;
-    }
+form {
+  max-width: 400px;
+  margin: 20px auto;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
 
-    .add-form p {
-      font-size: 1.5em;
-      color: #333;
-      margin-bottom: 20px;
-    }
+label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+}
 
-    .add-form form {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
 
-    .add-form input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 20px;
-      box-sizing: border-box;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
+button {
+  background-color: #007bff;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
-    .add-form button {
-      width: 50%;
-      padding: 10px;
-      background-color: #333;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
+button:hover {
+  background-color: #0056b3;
+}
 
-    .add-form button:hover {
-      background-color: #555;
-    }
+@media screen and (max-width: 600px) {
+  form {
+    width: 90%;
+  }
+}
+
   </style>
 </head>
-
 <body>
-  <div class="add-form" id="addSportForm">
-    <p>Add Sports</p>
-    <form id="sportForm"action="/admin/sports/add" method="post" >
-      <input type="text" name="sportName" id="sportName" placeholder="Sport Name" required />
-      <input type="url" name="sportImageUrl" id="sportImageUrl" placeholder="Image URL" required />
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <button type="submit">Add</button>
-    </form>
-  </div>
+  <h1>Add Sport</h1>
+  <form action="/admin/sports/add" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    
+    <label for="name">Sport Name:</label>
+    <input type="text" id="name" name="name" required>
+    
+    <label for="image_url">Image URL:</label>
+    <input type="text" id="image_url" name="image_url" required>
+    
+    <button type="submit">Submit</button>
+  </form>
 
-  <script>
-        const csrfToken = document.querySelector('input[name="_csrf"]').value;
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const sportForm = document.getElementById("sportForm");
-
-      sportForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        // Extract form data
-        const formData = new FormData(sportForm);
-        const sportName = formData.get("sportName");
-        const sportImageUrl = formData.get("sportImageUrl");
-
-        // Send a request to add the sport
-        fetch('/admin/sports/add', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'CSRF-Token': csrfToken, 
-
-          },
-          body: JSON.stringify({ name: sportName, image_url: sportImageUrl }),
-        })
-          .then(response => response.json())
-          .then(() => {
-            console.log('Sport added successfully');
-            window.location.href = '/admin_main';
-          });
-      });
-    });
-  </script>
 </body>
-
 </html>

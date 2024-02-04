@@ -71,29 +71,26 @@
       background-color: #2980b9;
     }
 
-    .event-card.joined {
-      background-color: #c0f0c0; /* Change the background color to indicate "joined" */
-    }
+    
   </style>
 </head>
 
 <body>
   <div class="events-container" id="eventsContainer">
     <% events.forEach(event => { %>
-      <div class="event-card <%= joinedEventIds.includes(event.id) ? 'joined' : '' %>" data-event-id="<%= event.id %>">
+      <div class="event-card">
         <img src="<%= event.teamLogo %>" alt="Team Logo">
         <div class="event-details">
           <h3><%= event.teamname %> - <%= event.eventName %></h3>
           <p>Date: <%= new Date(event.date).toLocaleString() %></p>
           <p>Venue: <%= event.venue %></p>
-
-          <!-- Include CSRF token as a data attribute -->
+          
+          <!-- Include a simple join button without functionality -->
           <button class="join-button" data-event-id="<%= event.id %>" data-csrf-token="<%= csrfToken %>">
-            <%= joinedEventIds.includes(event.id) ? 'Joined' : 'Join' %>
+            Join
           </button>
           <button class="viewPlayersBtn" data-event-id="<%= event.id %>">View Players</button>
 
-          <p class="event-id-display"></p>
         </div>
       </div>
     <% }); %>
@@ -101,12 +98,11 @@
   <script>
     document.addEventListener('click', async (event) => {
       const joinButton = event.target.closest('.join-button');
-
+  
       if (joinButton) {
         const eventId = joinButton.dataset.eventId;
         const csrfToken = joinButton.dataset.csrfToken;
-        console.log("hello");
-        console.log(eventId);
+        
         try {
           const response = await fetch('/join_event', {
             method: 'POST',
@@ -117,15 +113,16 @@
             body: JSON.stringify({ eventId }),
           });
           const data = await response.json();
-
+  
           if (data.success) {
             console.log('Player joined event successfully');
-
-            const eventCard = joinButton.closest('.event-card');
-            if (eventCard) {
-              eventCard.classList.add('joined');
-            }
+  
+            // Display an alert message
             alert('You have successfully joined the event!');
+  
+            // Redirect to the event page (modify the URL accordingly)
+            window.location.href = `/event/${eventId}`;
+  
           } else {
             console.error('Error joining event:', data.error);
           }
@@ -140,7 +137,6 @@
         window.location.href = `/view_players/${eventId}`;
       });
     });
-
   </script>
 </body>
 
