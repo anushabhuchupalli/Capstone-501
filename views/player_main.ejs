@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Page</title>
   <link rel="stylesheet" href="./Styles/admin.css" />
-
   <style>
     body {
       font-family: 'Montserrat', sans-serif;
@@ -67,6 +65,11 @@
       position: relative;
       z-index: 1;
     }
+    .section-heading {
+       color: #fff; 
+       text-align: center; 
+       margin-top: 20px; 
+}
 
     .sports-container {
       display: flex;
@@ -98,7 +101,7 @@
       border-radius: 15px 15px 0 0;
       object-fit: cover;
       width: 100%;
-      height: 85%; /* Adjusted height */
+      height: 85%;
       transition: filter 0.3s ease-in-out;
     }
 
@@ -111,7 +114,7 @@
       flex-direction: column;
       justify-content: space-between;
       padding: 10px;
-      height: 30%; /* Adjusted height */
+      height: 30%;
       width: 100%;
     }
 
@@ -121,34 +124,85 @@
 
     .create-button {
       margin-top: auto;
-      margin-left:65px; /* Push the button to the bottom */
+      margin-left: 65px; /* Push the button to the bottom */
       background-color: black; /* Changed color */
       color: white;
       border: none;
-      border-radius:6px;
-      padding: 2px 2px;;
+      border-radius: 6px;
+      padding: 2px 2px;
       cursor: pointer;
-      width:40%;
+      width: 40%;
     }
 
-    
+    .custom-alert {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 20%;
+  margin-left: 38%;
+  background-color: white; /* Red background color with transparency */
+  color: black;
+  padding: 20px;
+  border-radius: 30px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Add shadow for depth */
+  z-index: 9999;
+  display: none;
+}
+
+.custom-alert-message {
+  margin-bottom: 10px;
+  text-align: center; /* Center-align the message */
+}
+
+.custom-alert-buttons {
+  display: flex;
+  justify-content: center;
+}
+
+.custom-alert-button {
+  margin: 0 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.custom-alert-button.ok {
+  background-color: #4caf50;
+  color: white;
+}
+
+.custom-alert-button.cancel {
+  background-color: #f44336;
+  color: white;
+}
+
   </style>
 </head>
-
 <body>
   <div class="nav">
     <a href="/home" class="logo"></a>
     <div class="elements">
       <a href="/player_main">Home</a>
-      <a href="/events">events</a>
+      <a href="/events">Events</a>
       <a href="/my_events">My events</a>
       <a href="/logout">logout</a>
     </div>
   </div>
+  
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
+  <!-- Custom alert box -->
+  <div class="custom-alert" id="customAlert">
+    <div class="custom-alert-message">Change Password.</div>
+    <div class="custom-alert-buttons">
+      <button class="custom-alert-button ok" onclick="redirectToChangePassword()">OK</button>
+      <button class="custom-alert-button cancel" onclick="dismissCustomAlert()">Cancel</button>
+    </div>
+  </div>
+  <h2 class="section-heading">Available Sports</h2>
+
   <div class="section">
-    <h2>Available Sports</h2>
     <div class="sports-container" id="sportsContainer"></div>
   </div>
 
@@ -166,7 +220,7 @@
           <img src="${sport.image_url}" alt="${sport.name}">
           <div class="sport-info">
             <h3>${sport.name}</h3>
-            <button class="create-button" onclick="createSport()">Create</button>
+            <button class="create-button" onclick="createSport()">Schedule</button>
           </div>
         `;
         sportsContainer.appendChild(sportCard);
@@ -193,8 +247,20 @@
           console.error('Error while fetching sports:', error);
         });
     });
-  </script>
-  
-</body>
+    const needChangePassword = true; // Change this value based on your logic
+if (needChangePassword) {
+  const customAlert = document.getElementById('customAlert');
+  customAlert.style.display = 'block';
+}
 
+function redirectToChangePassword() {
+  window.location.href = '/change_password';
+}
+
+function dismissCustomAlert() {
+  const customAlert = document.getElementById('customAlert');
+  customAlert.style.display = 'none';
+}
+  </script>
+</body>
 </html>

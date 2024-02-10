@@ -12,6 +12,9 @@ app.set('views', path.join(__dirname, 'views'));
 const { Op } = require('sequelize'); 
 const cookieParser = require('cookie-parser');
 const { Pool } = require('pg');
+const bcrypt = require('bcrypt');
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 const csrf = require('csurf');
 app.use(flash());
@@ -72,7 +75,7 @@ sessionStore.sync().then(() => {
 app.use(passport.initialize());
 app.use(passport.session());
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/mainpage.html');
+  res.render('mainpage');
 });
 
 // Define Sequelize models
@@ -542,31 +545,37 @@ app.get("/my_events", ensureAuthenticated, async (req, res) => {
 });
 
 
-app.get('/changepassword', (req, res) => {
+app.get('/change_password', (req, res) => {
   const csrfToken = req.csrfToken();
   res.render('change_password', { csrfToken });
 });
 
-app.post('/change_password', async (req, res) => {
-  const { username, currentPassword, newPassword } = req.body;
 
+app.post('/change_password', async (req, res) => {
+  const { email, currentPassword, newPassword } = req.body;
+  console.log(email);
   try {
     const user = await People.findOne({
-      where: { username, password: currentPassword },
+      where: { email },
     });
 
     if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    if (!user.comparePassword(currentPassword)) {
       return res.status(401).json({ message: 'Incorrect current password' });
     }
 
     await user.update({ password: newPassword });
-
-    res.json({ message: 'Password updated successfully' });
-  } catch (error) {
+    res.json({ message: 'Password updated successfully', redirectTo: '/player_main' });
+} catch (error) {
     console.error('Error changing password:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+
 app.get('/admin/schedules', async (req, res) => {
   try {
     // Fetch all schedules from the database

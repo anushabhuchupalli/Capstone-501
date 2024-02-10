@@ -325,8 +325,8 @@
                         <input type="password" class="form__input" name="password" placeholder="password">
                     </div>
                 </div>
-                <a href="/changepassword" class="form__forgot" id="changePasswordLink">change Password?</a>
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <a href="#" class="form__forgot" id="changePasswordLink">Forgot Password?</a>
 
                 <input type="submit" class="form__button" value="Login">
                 <p class="form__signup-link" id="signupLink">Don't have an account? <a href="#">Sign up here</a>.</p>
@@ -346,21 +346,6 @@
             document.getElementById('signupForm').style.display = 'none';
             document.getElementById('loginForm').style.display = 'block';
         });
-        document.getElementById('changePasswordLink').addEventListener('click', function (event) {
-        event.preventDefault(); // Prevent the default behavior of the link
-        // Toggle the visibility of the change password form
-        document.getElementById('changePasswordForm').style.display = 'block';
-        document.getElementById('loginForm').style.display = 'none';
-        document.getElementById('signupForm').style.display = 'none';
-    });
-    const csrfToken = document.querySelector('input[name="_csrf"]').value;
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/api/endpoint', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-CSRF-Token',csrfToken);
-        // Send the request
-        xhr.send(JSON.stringify(data));
     </script>
 </body>
 

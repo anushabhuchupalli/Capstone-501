@@ -67,7 +67,11 @@
       position: relative;
       z-index: 1;
     }
-
+    .section-heading {
+       color: #fff; 
+       text-align: center; 
+       margin-top: 20px; 
+}
     .sports-container {
       display: flex;
       flex-wrap: wrap;
@@ -134,9 +138,9 @@
       <a href="/logout">Logout</a>
     </div>
   </div>
+  <h2 class="section-heading">Available Sports</h2>
 
   <div class="section">
-    <h2>Available Sports</h2>
     <div class="sports-container" id="sportsContainer"></div>
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   </div>
