@@ -309,7 +309,6 @@ app.get('/add_sport', (req, res) => {
 app.post('/admin/sports/add', ensureAuthenticated, async (req, res) => {
   try {
     const { name, image_url } = req.body;
-    console.log('anuuuuuu');
     if (!image_url) {
       return res.status(400).json({ success: false, error: 'Image URL cannot be null or empty.' });
     }
@@ -403,14 +402,27 @@ app.post('/create_schedule', ensureAuthenticated, async (req, res) => {
 app.delete('/admin/sports/:id', ensureAuthenticated, async (req, res) => {
   try {
     const sportId = req.params.id;
-    await Sport.destroy({ where: { id: sportId } });
 
-    res.status(200).json({ success: true });
+    // Find the sport to be deleted
+    const sportToDelete = await Sport.findByPk(sportId);
+
+    if (!sportToDelete) {
+      return res.status(404).json({ success: false, error: 'Sport not found' });
+    }
+
+    // Delete the sport
+    await sportToDelete.destroy();
+
+    // Now, delete all schedules associated with the deleted sport
+    await Schedule.destroy({ where: { sportName: sportToDelete.name } });
+
+    res.status(200).json({ success: true, message: 'Sport and associated schedules deleted successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 });
+
 app.get('/events', ensureAuthenticated, async (req, res) => {
   try {
     const username = req.user && req.user.username ? req.user.username : null;
@@ -460,6 +472,11 @@ app.post('/join_event', ensureAuthenticated, async (req, res) => {
     if (!schedule) {
       return res.status(404).json({ success: false, error: 'Schedule not found' });
     }
+    const eventDate = new Date(schedule.date);
+    const currentDate = new Date();
+    if (eventDate < currentDate) {
+      return res.status(400).json({ success: false, error: 'Cannot join past sessions' });
+    }
     const playerJoin = await PlayerJoins.create({
       playerName: username,
       userType: userType, // Store the user type in PlayerJoins table
@@ -488,6 +505,39 @@ app.get('/view_players/:eventId', ensureAuthenticated, async (req, res) => {
   } catch (error) {
     console.error('Error fetching players for the event:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.get("/my_events", ensureAuthenticated, async (req, res) => {
+  try {
+    const currentUserName = req.user.username;
+
+    const playerJoinsData = await PlayerJoins.findAll({
+      attributes: ['ScheduleId'], // We only need the scheduleId
+      where: {
+        playerName: currentUserName
+      }
+    });
+
+    const scheduleIds = [];
+    playerJoinsData.forEach(entry => {
+      scheduleIds.push(entry.ScheduleId);
+    });
+    if (scheduleIds.length === 0) {
+      return res.send('noEvents');
+    }
+
+    const formattedData = await Schedule.findAll({
+      where: {
+        id: { [Op.in]: scheduleIds }
+      }
+    });
+    
+    // Render the myEvents view and pass the formatted data
+    return res.render('my_events', { formattedData, name: currentUserName,csrfToken: req.csrfToken() });
+  } catch (error) {
+    console.error("Error retrieving data:", error);
+    return res.status(500).send("Internal Server Error");
   }
 });
 
@@ -540,24 +590,33 @@ app.get('/records', (req, res) => {
   const csrfToken = req.csrfToken();
   res.render('calender', { csrfToken });
 });
+
 app.get('/api/events', async (req, res) => {
   const date = req.query.date;
+  const sport = req.query.sport;
 
   if (!date) {
     return res.status(400).json({ error: 'Date parameter is missing' });
   }
 
   try {
-    // Fetch events from the Schedule table for the specified date
-    const events = await Schedule.findAll({
-      attributes: ['eventName', 'teamname', 'venue', 'date'], // Adjust attributes as needed
+    // Build the query object based on the date and, if applicable, the sport
+    const query = {
+      attributes: ['eventName', 'teamname', 'venue', 'date'],
       where: {
         date: {
           [Op.gte]: new Date(date),
           [Op.lt]: new Date(new Date(date).getTime() + 24 * 60 * 60 * 1000),
         },
       },
-    });
+    };
+
+    if (sport && sport !== 'all') {
+      query.where.sportName = sport;
+    }
+
+    // Fetch events from the Schedule table
+    const events = await Schedule.findAll(query);
 
     res.json(events);
   } catch (error) {
@@ -576,11 +635,23 @@ app.get('/admin/:adminId', (req, res) => {
 app.get('/player_main', ensureAuthenticated, (req, res) => {
   res.render('player_main');
 });
-app.get('/logout', (req, res) => {
-  req.logout(); // Clears the login session
-  res.redirect('/login');
+// Assuming this is within an Express route handler
+app.get('/logout', function(req, res) {
+  req.logout(function(err) {
+      if (err) {
+          console.error(err);
+          return res.status(500).send('Error logging out');
+      }
+      res.redirect('/'); 
+  });
 });
+
+
+
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+app.locals.sequelize = sequelize;
+module.exports = { app, sequelize, Schedule }; // Export other models if needed
+

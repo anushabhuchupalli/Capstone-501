@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,21 +11,23 @@
   <style>
     body {
       font-family: 'Montserrat', sans-serif;
-      background-image: white;
       margin: 0;
       padding: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
+      background: linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://media.istockphoto.com/id/469551258/photo/silhouettes-of-hockey-fans-at-a-hockey-game.jpg?s=612x612&w=0&k=20&c=TqHldoOIM3voP38T2qUup0CR0ncQDlgPlr4GHy1pv9E=');
       min-height: 100vh;
       box-sizing: border-box;
       position: relative;
+      background-size: cover;
+      background-position: center;
     }
 
     .nav {
       background-color: rgba(51, 51, 51, 0.8);
       color: #fff;
-      padding: 10px;
+      padding: 15px;
       display: flex;
       justify-content: space-between;
       width: 100%;
@@ -74,17 +75,19 @@
     }
 
     .sport-card {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
       margin: 20px;
       overflow: hidden;
-      height:250px;
+      height: 280px;
+      padding:5px;
       transition: transform 0.3s ease-in-out;
       width: 250px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative;
     }
 
     .sport-card:hover {
@@ -92,52 +95,43 @@
     }
 
     .sport-card img {
-      border-radius: 10px 10px 0 0;
+      border-radius: 15px;
       object-fit: cover;
-      height: 300px; /* Adjust the height as needed */
-
+      height: 100%;
       width: 100%;
+      transition: filter 0.3s ease-in-out;
     }
 
-    .sport-card-content {
-      padding: 20px;
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    .sport-card img:hover {
+      filter: brightness(80%);
     }
 
-    .sport-card h3 {
-      color: #333;
-      font-size: 1.8em;
-      margin-bottom: 10px;
-    }
-
-    .sport-card button {
-      background-color: #333;
+    .delete-button {
+      background-color: rgba(255, 0, 0, 0.8);
+      color: white;
       border: none;
       border-radius: 5px;
-      color: #fff;
+      padding: 5px 10px;
       cursor: pointer;
-      padding: 10px;
-      transition: background-color 0.3s;
-      width: 70%;
+      margin-top: 10px;
     }
 
-    .sport-card button:hover {
-      background-color: #555;
+    .delete-button:hover {
+      background-color: rgba(255, 0, 0, 1);
     }
   </style>
 </head>
 
 <body>
   <div class="nav">
-    <a href="/home" class="logo"></a>
+    <a href="/home" class="logo">Admin Page</a>
     <div class="elements">
       <a href="/admin_main">Home</a>
       <a href="/records">Schedules</a>
       <a href="/events">Events</a>
+      <a href="/my_events">My events</a>
       <a href="/add_sport">Add Sport</a>
+      <a href="/logout">Logout</a>
     </div>
   </div>
 
@@ -145,73 +139,99 @@
     <h2>Available Sports</h2>
     <div class="sports-container" id="sportsContainer"></div>
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-
   </div>
 
   <script>
-  let sports = [];
+    let sports = [];
 
-  function displaySports() {
-    const sportsContainer = document.getElementById("sportsContainer");
-    sportsContainer.innerHTML = "";
+    function displaySports() {
+      const sportsContainer = document.getElementById("sportsContainer");
+      sportsContainer.innerHTML = "";
 
-    sports.forEach((sport, index) => {
-      const sportCard = document.createElement("div");
-      sportCard.classList.add("sport-card");
-      sportCard.innerHTML = `
-        <h3>${sport.name}</h3>
-        <img src="${sport.image_url}" alt="${sport.name}" style="max-width: 100%; max-height: 100px;">
-        <button onclick="deleteSport(${index})">Delete</button>
-      `;
-      console.log("Image URL:", sport.image_url);
+      sports.forEach((sport, index) => {
+        const sportCard = document.createElement("div");
+        sportCard.classList.add("sport-card");
+        sportCard.innerHTML = `
+          <h3>${sport.name}</h3>
+          <img src="${sport.image_url}" alt="${sport.name}">
+          <button class="delete-button" onclick="deleteSport(${index})">Delete</button>
+        `;
 
-      sportsContainer.appendChild(sportCard);
-    });
-  }
+        sportsContainer.appendChild(sportCard);
 
-  function deleteSport(index) {
-    const sportToDelete = sports[index];
-
-    // Fetch the CSRF token from the page
-    const csrfToken = document.querySelector('input[name="_csrf"]').value;
-
-    // Send a DELETE request to delete the sport
-    fetch(`/admin/sports/${sportToDelete.id}`, {
-      method: 'DELETE',
-      headers: {
-        'CSRF-Token': csrfToken,
-      },
-    })
-      .then(response => {
-        if (response.ok) {
-          // If deletion is successful, update the sports array and display the updated list
-          sports.splice(index, 1);
-          displaySports();
-        } else {
-          console.error('Failed to delete sport from the server.');
+        // Add line breaks to create rows of four sports
+        if ((index + 1) % 4 === 0) {
+          sportsContainer.appendChild(document.createElement('br'));
         }
-      })
-      .catch(error => {
-        console.error('Error while deleting sport:', error);
       });
-  }
-
-  fetch('/api/sports')
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`Failed to fetch sports. Status: ${response.status}`);
     }
-    return response.json();
+
+    function deleteSport(index) {
+      const sportToDelete = sports[index];
+
+      // Fetch the CSRF token from the page
+      const csrfToken = document.querySelector('input[name="_csrf"]').value;
+
+      // Send a DELETE request to delete the sport
+      fetch(`/admin/sports/${sportToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'CSRF-Token': csrfToken,
+        },
+      })
+        .then(response => {
+          if (response.ok) {
+            // If deletion is successful, update the sports array and display the updated list
+            sports.splice(index, 1);
+            deleteSchedulesBySport(sportToDelete.name);
+            displaySports();
+          } else {
+            console.error('Failed to delete sport from the server.');
+          }
+        })
+        .catch(error => {
+          console.error('Error while deleting sport:', error);
+        });
+    }
+
+    fetch('/api/sports')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Failed to fetch sports. Status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      sports = data;
+      displaySports();
+    })
+    .catch(error => {
+      console.error('Error while fetching sports:', error);
+    });
+    function deleteSchedulesBySport(sportName) {
+  // Fetch the CSRF token from the page
+  const csrfToken = document.querySelector('input[name="_csrf"]').value;
+
+  // Send a DELETE request to delete schedules associated with the sport
+  fetch(`/admin/schedules/${sportName}`, {
+    method: 'DELETE',
+    headers: {
+      'CSRF-Token': csrfToken,
+    },
   })
-  .then(data => {
-    sports = data;
-    displaySports();
+  .then(response => {
+    if (response.ok) {
+      // Schedules associated with the sport are successfully deleted
+      // Update UI or perform any necessary actions
+    } else {
+      console.error('Failed to delete schedules associated with the sport.');
+    }
   })
   .catch(error => {
-    console.error('Error while fetching sports:', error);
+    console.error('Error while deleting schedules:', error);
   });
-
-</script>
+}
+  </script>
 
 </body>
 

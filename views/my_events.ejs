@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Events</title>
+  <style>
+    /* Body styles */
+    .body {
+      font-family: Arial, sans-serif;
+      padding: 0;
+      display: flex;
+      min-height: 100vh;
+    }
+    h1 {
+      font-size: 30px;
+      margin-top: 20px;
+      margin-left:700px;
+      margin-bottom: 20px;
+    }
+    /* Container styles */
+    .container {
+      max-width: 800px;
+    }
+
+    /* Card styles */
+    .card {
+      background-color: lavender;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      margin-top:80px;
+      margin-left: 90px;
+      overflow: hidden;
+    }
+
+    /* Card content styles */
+    .card-content {
+      padding: 20px;
+    }
+
+    /* Event name styles */
+    .event-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    /* Date styles */
+    .date {
+      font-size: 14px;
+      color: #666;
+    }
+
+    /* CSRF token input styles */
+    #csrfToken {
+      display: none; /* Hide the CSRF token input */
+    }
+  </style>
+</head>
+<body>
+  <h1>Joined Events</h1>
+
+  <div class="container">
+
+    <% formattedData.forEach(event => { %>
+      <div class="card">
+        <div class="card-content">
+          <div class="event-name">Event Name: <%= event.eventName %></div>
+          <div class="date">Date: <%= event.date %></div>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+  
+  <!-- CSRF Token -->
+  <input type="hidden" id="csrfToken" value="<%= csrfToken %>">
+</body>
+</html>

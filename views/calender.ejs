@@ -103,7 +103,7 @@
 
     <div id="static-bar">
         <div id="today-container">
-            <h2 id="left-heading">TODAY</h2>
+            <h2 id="left-heading">Select Date</h2>
             <!-- Calendar Symbol to trigger datepicker -->
             <span id="calendar-symbol">📅</span>
             <!-- Hidden datepicker input field -->
@@ -118,7 +118,11 @@
                     <option value="football">Football</option>
                     <option value="cricket">Cricket</option>
                     <option value="tennis">Tennis</option>
-                    <!-- Add more sports as needed -->
+                    <option value="chess">chess</option>
+                    <option value="hockey">Hockey</option>
+                    <option value="badminton">Badminton</option>
+
+
                 </select>
             </h2>
         </div>
@@ -131,60 +135,73 @@
     </div>
 
     <script>
-      $(document).ready(function () {
+        $(document).ready(function () {
           const datePicker = flatpickr("#datepicker", {
-              dateFormat: "Y-m-d",
-              onClose: function (selectedDates, dateStr, instance) {
-                  // Handle date selection
-                  fetchSchedules(dateStr);
-              },
+            dateFormat: "Y-m-d",
+            onClose: function (selectedDates, dateStr, instance) {
+              // Handle date selection
+              fetchSchedules(dateStr);
+            },
           });
-
+      
           $("#calendar-symbol").on("click", function () {
-              datePicker.open();
+            const staticBarPosition = $("#static-bar").offset();
+            const topPosition = staticBarPosition.top + $("#static-bar").outerHeight();
+            const leftPosition = staticBarPosition.left;
+      
+            datePicker.calendarContainer.style.top = topPosition + "px";
+            datePicker.calendarContainer.style.left = leftPosition + "px";
+      
+            datePicker.toggle();
           });
-
+      
           $("#sport-dropdown").on("change", function () {
-              const selectedSport = $(this).val();
-              fetchSchedules(datePicker.selectedDates[0], selectedSport);
+            const selectedSport = $(this).val();
+            fetchSchedules(datePicker.selectedDates[0], selectedSport);
           });
-
+      
           function fetchSchedules(date, sport) {
-              $.ajax({
-                  url: '/api/events',
-                  type: 'GET',
-                  data: {
-                      date: date,
-                      sport: sport,
-                  },
-                  success: function (response) {
-                      displaySchedules(response);
-                  },
-                  error: function (xhr, status, error) {
-                      console.error('Error fetching events:', error);
-                  },
-              });
+            // Update the URL to your actual backend endpoint
+            const url = '/api/events';
+            const requestData = {
+              date: date,
+            };
+      
+            // Include the sport parameter only if a specific sport is selected
+            if (sport && sport !== "All Sports") {
+              requestData.sport = sport;
+            }
+      
+            $.ajax({
+              url: url,
+              type: 'GET',
+              data: requestData,
+              success: function (response) {
+                displaySchedules(response);
+              },
+              error: function (xhr, status, error) {
+                console.error('Error fetching events:', error);
+              },
+            });
           }
-
+      
           function displaySchedules(schedules) {
-              const eventsList = $("#events-list");
-              eventsList.empty();
-
-              if (schedules.length === 0) {
-                  const selectedSport = $("#sport-dropdown").val();
-                  eventsList.append(`<p>No schedules for the selected date and sport (${selectedSport}).</p>`);
-              } else {
-                  schedules.forEach(schedule => {
-                      const eventItem = $("<li></li>").text(
-                          `Event: ${schedule.eventName}, Team: ${schedule.teamname}, Venue: ${schedule.venue}, Date: ${new Date(schedule.date).toLocaleString()}`
-                      );
-                      eventsList.append(eventItem);
-                  });
-              }
+            const eventsList = $("#events-list");
+            eventsList.empty();
+      
+            if (schedules.length === 0) {
+              const selectedSport = $("#sport-dropdown").val();
+              eventsList.append(`<p>No schedules for the selected date and sport (${selectedSport}).</p>`);
+            } else {
+              schedules.forEach(schedule => {
+                const eventItem = $("<li></li>").text(
+                  `Event:${schedule.eventName}, Team: ${schedule.teamname}, Venue: ${schedule.venue}, Time: ${new Date(schedule.date).toLocaleTimeString()}`
+                );
+                eventsList.append(eventItem);
+              });
+            }
           }
-      });
-  </script>
-
+        });
+      </script>
 </body>
-
-</html>
+</html>    
