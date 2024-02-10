@@ -236,6 +236,20 @@
     }
   
     document.addEventListener("DOMContentLoaded", () => {
+      const customAlert = document.getElementById('customAlert');
+  const alreadyShown = localStorage.getItem('changePasswordAlertShown');
+
+  // If the alert hasn't been shown before and the user needs to change the password, display it
+  if (!alreadyShown && needChangePassword) {
+    customAlert.style.display = 'block';
+    localStorage.setItem('changePasswordAlertShown', true);
+  } else {
+    // Hide the "Change Password" button if the alert has been shown before
+    const createButton = document.querySelector('.create-button');
+    if (createButton) {
+      createButton.style.display = 'none';
+    }
+  }
       // Fetch sports data from the server
       fetch('/api/sports')
         .then(response => response.json())

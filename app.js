@@ -161,6 +161,22 @@ app.get('/player', (req, res) => {
   res.render('player_signup', { csrfToken: req.csrfToken() });
 });
 
+app.get('/person_main', ensureAuthenticated, (req, res) => {
+  const csrfToken = req.csrfToken();
+
+  res.render('player_main', {csrfToken });});
+
+  app.get('/admin_main', (req, res) => {
+    const csrfToken = req.csrfToken();
+    res.render('admin_main', { csrfToken });
+  });
+
+  
+  app.get('/add_sport', (req, res) => {
+    const csrfToken = req.csrfToken();
+    res.render('add_sport', { csrfToken });
+  
+  });
 
 sequelize.sync({ force : false})
   .then(() => {
@@ -169,6 +185,7 @@ sequelize.sync({ force : false})
   .catch((error) => {
     console.error('Error synchronizing database:', error);
   });
+
 passport.use('admin', new LocalStrategy(async (username, password, done) => {
   try {
     const admin = await Admin.findOne({ where: { username, password } });
@@ -237,8 +254,6 @@ app.post('/player/login', (req, res, next) => {
         return next(err);
       }
       else{
-
-      // Redirect to the desired page after successful submission
       console.log('User session after login:', req.session);
 
       return res.redirect('/person_main');
@@ -246,11 +261,6 @@ app.post('/player/login', (req, res, next) => {
     });
   })(req, res, next);
 });
-
-app.get('/person_main', ensureAuthenticated, (req, res) => {
-  const csrfToken = req.csrfToken();
-
-  res.render('player_main', {csrfToken });});
 
 
 app.post('/admin/signup', async (req, res) => {
@@ -266,8 +276,6 @@ app.post('/admin/signup', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
-
-
 
 
 app.post('/admin/login', (req, res, next) => {
@@ -291,24 +299,6 @@ app.post('/admin/login', (req, res, next) => {
   })(req, res, next);
 });
   
-
-
-app.get('/admin_main', (req, res) => {
-  const csrfToken = req.csrfToken();
-  console.log('CSRF Token:', csrfToken);
-
-  res.render('admin_main', { csrfToken });
-});
-
-
-
-app.get('/add_sport', (req, res) => {
-  const csrfToken = req.csrfToken();
-  console.log('CSRF Token:', csrfToken);
-
-  res.render('add_sport', { csrfToken });
-
-});
 app.post('/admin/sports/add', ensureAuthenticated, async (req, res) => {
   try {
     const { name, image_url } = req.body;
@@ -329,20 +319,8 @@ app.post('/admin/sports/add', ensureAuthenticated, async (req, res) => {
 });
 
 
-app.get('/admin_main', (req, res) => {
-  const csrfToken = req.csrfToken();
-  console.log('CSRF Token:', csrfToken);
-
-  res.render('admin_main', { csrfToken });
-});
-
-  
-
-
 app.get('/create_schedule', (req, res) => {
   const csrfToken = req.csrfToken();
-  console.log('CSRF Token:', csrfToken);
-
   res.render('schedules', { csrfToken });});
 
 app.get('/create_match', (req, res) => {
@@ -416,7 +394,6 @@ app.delete('/admin/sports/:id', ensureAuthenticated, async (req, res) => {
     // Delete the sport
     await sportToDelete.destroy();
 
-    // Now, delete all schedules associated with the deleted sport
     await Schedule.destroy({ where: { sportName: sportToDelete.name } });
 
     res.status(200).json({ success: true, message: 'Sport and associated schedules deleted successfully' });
@@ -563,10 +540,6 @@ app.post('/change_password', async (req, res) => {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    if (!user.comparePassword(currentPassword)) {
-      return res.status(401).json({ message: 'Incorrect current password' });
-    }
-
     await user.update({ password: newPassword });
     res.json({ message: 'Password updated successfully', redirectTo: '/player_main' });
 } catch (error) {
@@ -578,16 +551,13 @@ app.post('/change_password', async (req, res) => {
 
 app.get('/admin/schedules', async (req, res) => {
   try {
-    // Fetch all schedules from the database
     const schedules = await Schedule.findAll();
 
-    // Convert schedules to FullCalendar format
     const events = schedules.map(schedule => ({
       title: schedule.title,
       start: schedule.date.toISOString(), // Convert your date to ISO format
     }));
 
-    // Return JSON data for FullCalendar
     res.json(events);
   } catch (error) {
     console.error('Error fetching schedules:', error);
@@ -609,7 +579,6 @@ app.get('/api/events', async (req, res) => {
   }
 
   try {
-    // Build the query object based on the date and, if applicable, the sport
     const query = {
       attributes: ['eventName', 'teamname', 'venue', 'date'],
       where: {
@@ -624,7 +593,6 @@ app.get('/api/events', async (req, res) => {
       query.where.sportName = sport;
     }
 
-    // Fetch events from the Schedule table
     const events = await Schedule.findAll(query);
 
     res.json(events);
@@ -634,7 +602,6 @@ app.get('/api/events', async (req, res) => {
   }
 });
 
-// ... (other routes and server setup)
 
 app.get('/admin/:adminId', (req, res) => {
   const adminId = req.params.adminId;
@@ -644,7 +611,6 @@ app.get('/admin/:adminId', (req, res) => {
 app.get('/player_main', ensureAuthenticated, (req, res) => {
   res.render('player_main');
 });
-// Assuming this is within an Express route handler
 app.get('/logout', function(req, res) {
   req.logout(function(err) {
       if (err) {
@@ -662,5 +628,5 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 app.locals.sequelize = sequelize;
-module.exports = { app, sequelize, Schedule }; // Export other models if needed
+module.exports = { app, sequelize, Schedule }; 
 
