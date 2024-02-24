@@ -407,15 +407,7 @@ app.get('/events', ensureAuthenticated, async (req, res) => {
   try {
     const username = req.user && req.user.username ? req.user.username : null;
     console.log(username);
-    const events = await Schedule.findAll({
-      where: {
-        date: {
-          [Op.gte]: new Date(),
-        },
-      },
-      order: [['date', 'ASC']],
-    });
-
+    const events = await Schedule.findAll(); // Assuming Schedule is your Sequelize model
     const csrfToken = req.csrfToken();
     res.render('events', { events, csrfToken });
   } catch (error) {

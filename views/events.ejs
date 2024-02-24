@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="en">
-<meta name="_csrf" content="<%= csrfToken %>">
-
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events</title>
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -15,26 +16,24 @@
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
-      padding: 30px; /* Added padding for spacing */
+      padding: 30px; 
       width: 900px;
       margin: 30px;
     }
 
     .event-card {
-  flex-grow: 1; /* Allow the card to grow and occupy available space */
-  box-sizing: border-box;
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 5px;
-  overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-  margin-right: 20px; /* Added margin right for spacing between cards */
-  margin-bottom: 20px; /* Added margin bottom for spacing between rows */
-  width: calc((100% - 140px) / 3); /* Adjusted width calculation */
-}
-
-
+      flex-grow: 1; 
+      box-sizing: border-box;
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 5px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      margin-right: 20px;
+      margin-bottom: 20px;
+      width: calc((100% - 140px) / 3);
+    }
 
     .event-card:hover {
       transform: translateY(-5px);
@@ -59,6 +58,13 @@
     p {
       margin: 0 0 8px;
       color: #666;
+    }
+
+    .completed-button {
+      background-color: lightcoral;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
     }
 
     button {
@@ -87,7 +93,6 @@
           <p>Date: <%= new Date(event.date).toLocaleString() %></p>
           <p>Venue: <%= event.venue %></p>
           
-          <!-- Include a simple join button without functionality -->
           <% if (new Date(event.date) < new Date()) { %>
             <button class="completed-button" disabled>Completed</button>
           <% } else { %>
@@ -101,7 +106,17 @@
       </div>
     <% }); %>
   </div>
+
   <script>
+    let alertShown = false;
+
+    function showAlert() {
+      if (!alertShown) {
+        alert('You have successfully joined the event!');
+        alertShown = true;
+      }
+    }
+
     document.addEventListener('click', async (event) => {
       const joinButton = event.target.closest('.join-button');
   
@@ -122,11 +137,7 @@
   
           if (data.success) {
             console.log('Player joined event successfully');
-  
-            // Display an alert message
-            alert('You have successfully joined the event!');
-  
-            // Redirect to the event page (modify the URL accordingly)
+            showAlert();
             window.location.href = `/events`;
   
           } else {
@@ -137,6 +148,7 @@
         }
       }
     });
+
     document.querySelectorAll('.viewPlayersBtn').forEach(button => {
       button.addEventListener('click', function() {
         const eventId = this.getAttribute('data-event-id');
@@ -145,5 +157,4 @@
     });
   </script>
 </body>
-
 </html>

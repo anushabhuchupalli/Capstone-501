@@ -52,10 +52,27 @@
       font-size: 14px;
       color: #666;
     }
+     .completed-button{
+      color:white;
+      background-color: grey;
+      border: none;
+      padding: 7px 12px;
+      border-radius: 5px;
+      margin-top:28px;
+     }
+    /* Button styles */
+    .button {
+      background-color: #3498db;
+      color: #fff;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
 
-    /* CSRF token input styles */
-    #csrfToken {
-      display: none; /* Hide the CSRF token input */
+    .button:hover {
+      background-color: #2980b9;
     }
   </style>
 </head>
@@ -63,12 +80,14 @@
   <h1>Joined Events</h1>
 
   <div class="container">
-
     <% formattedData.forEach(event => { %>
       <div class="card">
         <div class="card-content">
           <div class="event-name">Event Name: <%= event.eventName %></div>
           <div class="date">Date: <%= event.date %></div>
+          <% if (new Date(event.date) < new Date()) { %>
+            <button class="completed-button" disabled>Completed</button>
+          <% } %>
         </div>
       </div>
     <% }); %>
